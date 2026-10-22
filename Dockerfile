@@ -1,20 +1,13 @@
-FROM php:8.4-cli
+FROM php:8.4-apache
 
-# Instalamos Apache y dependencias del sistema
-RUN apt-get update && apt-get install -y \
-    apache2 \
-    libapache2-mod-php \
+# Instalamos solo las librerías necesarias sin actualizar todo el sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng-dev \
     libzip-dev \
-    libicu-dev \
     libonig-dev \
-    unzip \
-    git \
-    curl \
+    libicu-dev \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Instalamos las extensiones de PHP
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl
 
 # Copiamos Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -23,13 +16,13 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY . .
 
-# Instalamos las dependencias de Laravel (ahora sí con PHP 8.4)
+# Instalamos dependencias de Laravel
 RUN composer install --no-dev --optimize-autoloader
 
-# Damos permisos a Laravel
+# Permisos
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Configuramos Apache para apuntar a public
+# Configuración de Apache
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/sites-available/*.conf
 RUN sed -ri -e "s!/var/www/!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf

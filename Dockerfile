@@ -30,3 +30,10 @@ RUN a2enmod rewrite
 EXPOSE 80
 
 CMD php artisan migrate --force && apache2-foreground
+
+
+
+
+
+
+

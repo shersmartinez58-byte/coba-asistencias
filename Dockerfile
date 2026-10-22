@@ -19,8 +19,10 @@ COPY . .
 # Instalamos dependencias de Laravel
 RUN composer install --no-dev --optimize-autoloader
 
-# Permisos
+# Damos permisos a Laravel y limpiamos caché
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+RUN php artisan config:clear && php artisan view:clear && php artisan route:clear
 
 # Configuración de Apache
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
